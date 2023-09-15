@@ -1,0 +1,119 @@
+version: "3.8"
+
+services:
+
+    nginx:
+        restart: always
+        container_name: ${APP_NAME}-nginx
+        depends_on:
+            - php
+        working_dir: /var/www/html
+        ports:
+            - "${APP_PORT}:80"
+        volumes:
+            - ./:/var/www/html/
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+            - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./docker/nginx/data/logs/:/var/log/nginx/
+        build:
+            context: ./docker/nginx
+            args:
+                USER: ${USR}
+                GROUP: ${GRP}
+                UID: ${UID}
+                GID: ${GID}
+        networks:
+            - web
+        command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+    php:
+        restart: always
+        build:
+            context: ./docker/php
+            args:
+                USER: ${USR}
+                GROUP: ${GRP}
+                UID: ${UID}
+                GID: ${GID}
+        container_name: ${APP_NAME}-php
+        working_dir: /var/www/html
+        volumes:
+            - ./:/var/www/html
+            - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
+        networks:
+            - web
+
+    redis:
+        restart: always
+        build:
+            context: ./docker/redis
+        container_name: ${APP_NAME}-redis
+        volumes:
+            - ./docker/redis/data:/data
+        ports:
+            - "${REDIS_PORT}:6379"
+        command: >
+            --requirepass ${REDIS_PASSWORD}
+        logging:
+            options:
+                max-size: "1m"
+                max-file: "10"
+        networks:
+            - web
+
+    supervisor:
+        restart: always
+        build:
+            context: ./docker/php
+            dockerfile: Dockerfile
+            args:
+                USER: ${USR}
+                GROUP: ${GRP}
+                UID: ${UID}
+                GID: ${GID}
+        container_name: ${APP_NAME}-supervisor
+        volumes:
+            - ./:/var/www/html/:delegated
+        links:
+            - redis
+        depends_on:
+            - redis
+        working_dir: /var/www/html
+        entrypoint: [ "/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf" ]
+        networks:
+            - web
+
+    db:
+        build:
+            context: ./docker/db
+        container_name: ${APP_NAME}-db
+        restart: unless-stopped
+        ports:
+            - "${DB_PORT}:3306"
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: db
+        volumes:
+            - ./docker/db/data:/var/lib/mysql/
+        networks:
+            - web
+
+    phpmyadmin:
+        restart: always
+        build:
+            context: ./docker/phpmyadmin
+        container_name: ${APP_NAME}-phpmyadmin
+        depends_on:
+            - db
+        ports:
+            - ${PHPMYADMIN_PORT}:80
+        networks:
+            - web
+
+networks:
+    web:
+        name: ${APP_NAME}_network
