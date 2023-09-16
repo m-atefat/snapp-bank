@@ -39,7 +39,7 @@ class TransactionServices
             'amount' => $amount,
             'source_transaction_id' => $sourceTransaction?->id,
             'is_deposit' => true,
-            'balance' => $card->account->balance->increase($amount),
+            'balance' => $card->account->balance,
             'type' => $transactionType,
             'status' => TransactionStatus::INIT,
             'track_id' => Str::uuid()->toString(),

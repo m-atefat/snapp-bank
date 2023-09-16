@@ -78,11 +78,6 @@ class CardServices
             $this->transactionServices->setTransactionDone($depositTransaction);
             $this->transactionServices->createFeeTransaction($withdrawTransaction, $fee);
 
-            CardToCardDoneEvent::dispatch([
-                'withdraw_transaction' => $withdrawTransaction,
-                'deposit_transaction' => $depositTransaction
-            ]);
-
             $status = true;
             DB::commit();
         } catch (AccountBalanceInsufficientException $insufficientException) {
@@ -112,6 +107,13 @@ class CardServices
             }
 
             $error = self::TRANSACTION_FAILED;
+        }
+
+        if ($status){
+            CardToCardDoneEvent::dispatch([
+                'withdraw_transaction' => $withdrawTransaction,
+                'deposit_transaction' => $depositTransaction
+            ]);
         }
 
         return [
