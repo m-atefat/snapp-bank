@@ -20,6 +20,7 @@ class Card
      */
     public static function fromString(string $cardNumber): self
     {
+        $cardNumber = Str::remove('-', $cardNumber);
         static::validate($cardNumber);
         return new self($cardNumber);
     }
