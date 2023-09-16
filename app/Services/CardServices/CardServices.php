@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-readonly class CardServices
+class CardServices
 {
     public const INSUFFICIENT_BALANCE = 'INSUFFICIENT_BALANCE';
 
