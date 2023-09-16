@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property TransactionStatus $status
  * @property TransactionType $type
  * @property Amount $amount
+ * @property Amount $balance
  * @property Carbon $done_at
  * @property Card $card
  * @property Fee $fee
@@ -30,7 +31,9 @@ class Transaction extends Model
         'status' => TransactionStatus::class,
         'type' => TransactionType::class,
         'amount' => AmountCast::class,
-        'done_at' => 'datetime'
+        'balance' => AmountCast::class,
+        'done_at' => 'datetime',
+        'is_deposit' => 'boolean'
     ];
 
     public function card(): BelongsTo
@@ -40,7 +43,7 @@ class Transaction extends Model
 
     public function sourceTransaction(): BelongsTo
     {
-        return $this->belongsTo(__CLASS__,'source_transaction_id','id');
+        return $this->belongsTo(__CLASS__, 'source_transaction_id', 'id');
     }
 
     public function fee(): HasOne

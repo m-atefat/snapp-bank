@@ -32,7 +32,8 @@ class TransactionFactory extends Factory
             'card_id' => Card::factory(),
             'type' => $this->faker->randomElement(TransactionType::values()),
             'status' => $failed ? TransactionStatus::FAILED : TransactionStatus::DONE,
-            'amount' => Amount::forge($this->faker->biasedNumberBetween(100000, 99999999)),
+            'amount' => Amount::forge($this->faker->biasedNumberBetween(10000, 100000)),
+            'balance' => 0,
             'track_id' => $failed ? null : Str::uuid()->toString(),
             'done_at' => $failed ? null : now(),
         ];

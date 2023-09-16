@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\ValueObjects\Amount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +20,8 @@ class AccountFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'number' => $this->faker->unique()->numerify('############')
+            'number' => $this->faker->unique()->numerify('############'),
+            'balance' => Amount::forge(100000000)
         ];
     }
 }

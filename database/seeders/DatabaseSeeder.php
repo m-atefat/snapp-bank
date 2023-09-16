@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
     {
         $cardToCardFee = Amount::forge(config('fee.card_to_card'));
 
-        User::factory(1)->create()
+        User::factory(5)->create()
             ->each(fn(User $user) => Account::factory(2)
                 ->create(['user_id' => $user->id])
                 ->each(fn(Account $account) => Card::factory(2)
@@ -31,6 +31,8 @@ class DatabaseSeeder extends Seeder
                         ->create([
                             'card_id' => $card->id,
                             'type' => TransactionType::CARD_TO_CARD,
+                            'amount' => Amount::forge(5000),
+                            'balance' => $card->account->balance->decrease(Amount::forge(5000)),
                             'status' => TransactionStatus::DONE,
                             'track_id' => Str::uuid()->toString(),
                             'done_at' => now()->subMinutes(random_int(1, 20)),
@@ -38,6 +40,7 @@ class DatabaseSeeder extends Seeder
                             ->create([
                                 'card_id' => Card::factory()->create(),
                                 'amount' => $transaction->amount->decrease($cardToCardFee),
+                                'balance' => $transaction->card->account->balance->increase($transaction->amount->decrease($cardToCardFee)),
                                 'is_deposit' => true,
                                 'source_transaction_id' => $transaction->id,
                                 'type' => TransactionType::CARD_TO_CARD,

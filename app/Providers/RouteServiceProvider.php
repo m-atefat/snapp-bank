@@ -29,18 +29,24 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         $this->routes(function () {
+            Route::prefix('api/v1')
+                ->middleware('api')
+                ->name('v1.')
+                ->group(function (){
+                    Route::middleware('api')
+                        ->name('cards.')
+                        ->prefix('cards')
+                        ->group(base_path('routes/v1/card-api.php'));
+
+                    Route::middleware('api')
+                        ->name('reports.')
+                        ->prefix('reports')
+                        ->group(base_path('routes/v1/report-api.php'));
+                });
+
             Route::middleware('api')
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
-
-            Route::middleware('api')
-                ->name('v1.cards.')
-                ->prefix('api/v1/cards')
-                ->group(base_path('routes/v1/card-api.php'));
-
-            Route::middleware('api')
-                ->prefix('api/v1/reports')
-                ->group(base_path('routes/v1/report-api.php'));
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));

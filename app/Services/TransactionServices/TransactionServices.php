@@ -22,6 +22,7 @@ class TransactionServices
         return $card->transactions()->create([
             'amount' => $amount,
             'type' => $transactionType,
+            'balance' => $card->account->balance->decrease($amount),
             'status' => TransactionStatus::INIT,
             'track_id' => Str::uuid()->toString(),
         ]);
@@ -38,6 +39,7 @@ class TransactionServices
             'amount' => $amount,
             'source_transaction_id' => $sourceTransaction?->id,
             'is_deposit' => true,
+            'balance' => $card->account->balance->increase($amount),
             'type' => $transactionType,
             'status' => TransactionStatus::INIT,
             'track_id' => Str::uuid()->toString(),
@@ -46,7 +48,11 @@ class TransactionServices
 
     public function setTransactionFailed(Transaction $transaction): Transaction|Model
     {
-        $transaction->update(['status' => TransactionStatus::FAILED]);
+        $transaction->update([
+            'status' => TransactionStatus::FAILED,
+            'balance' => $transaction->card->account->balance
+        ]);
+
         return $transaction->refresh();
     }
 

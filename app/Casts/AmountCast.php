@@ -24,7 +24,7 @@ class AmountCast implements CastsAttributes
      */
     public function get(Model $model, string $key, mixed $value, array $attributes): mixed
     {
-        return Amount::forge($value);
+        return Amount::forge($value ?? 0);
     }
 
     /**

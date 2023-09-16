@@ -26,6 +26,7 @@ return new class extends Migration
             )->default(TransactionStatus::INIT->value)->index();
 
             $table->decimal('amount', 13, 0);
+            $table->unsignedDecimal('balance', 13,0)->default(0);
             $table->string('track_id')->nullable()->index();
             $table->timestamp('done_at')->nullable();
             $table->timestamps();
