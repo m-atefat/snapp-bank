@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\AccountBalanceInsufficientException;
 use App\Exceptions\CardToCardAmountLimitationException;
 use App\Exceptions\InvalidCardNumberException;
 use App\Exceptions\InvalidCardNumberLengthException;
@@ -32,12 +33,21 @@ class CardController extends Controller
         $destCard = Card::fromString($request->input('destination_card_number'));
         $amount = CardToCardAmount::forge($request->input('amount'));
 
-        $result = $this->cardServices->cardToCard($sourceCard, $destCard, $amount);
+        try {
 
-        return response()->json([
-            'status' => $result['status'] === true ? 'success' : 'failed',
-            'error' => $result['error'],
-            'tracking_code' => $result['withdraw_transaction']?->track_id
-        ]);
+            $result = $this->cardServices->cardToCard($sourceCard, $destCard, $amount);
+            return response()->json([
+                'status' => $result['status'] === true ? 'success' : 'failed',
+                'error' => $result['error'],
+                'tracking_code' => $result['withdraw_transaction']?->track_id
+            ]);
+
+        } catch (AccountBalanceInsufficientException $insufficientException) {
+            return response()->json([
+                'status' => 'failed',
+                'error' => CardServices::INSUFFICIENT_BALANCE,
+                'tracking_code' => null
+            ]);
+        }
     }
 }

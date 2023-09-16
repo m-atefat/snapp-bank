@@ -6,6 +6,7 @@ use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
 use App\Events\CardToCardDoneEvent;
 use App\Exceptions\AccountBalanceInsufficientException;
+use App\Exceptions\InvalidAmountException;
 use App\Models\Account;
 use App\Models\Card as CardModel;
 use App\Models\Transaction;
@@ -17,6 +18,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class CardServices
 {
@@ -28,9 +30,13 @@ class CardServices
     {
     }
 
+    /**
+     * @throws Throwable
+     * @throws AccountBalanceInsufficientException
+     * @throws InvalidAmountException
+     */
     public function cardToCard(Card $sourceCard, Card $destinationCard, CardToCardAmount $amount): array
     {
-        $withdrawTransaction = null;
         $depositTransaction = null;
         $status = false;
         $error = null;
@@ -38,28 +44,28 @@ class CardServices
         $fee = Amount::forge(config('fee.card_to_card'));
         $amountWithFee = $amount->getAmountObject()->increase($fee);
 
+        /** @var CardModel $sourceCardModel */
+        $sourceCardModel = CardModel::findWithNumber($sourceCard)->firstOrFail();
+
+        /** @var CardModel $destinationCardModel */
+        $destinationCardModel = CardModel::findWithNumber($destinationCard)->firstOrFail();
+
+        if ($sourceCardModel->account->balance->isLowerThan($amountWithFee)) {
+            throw new AccountBalanceInsufficientException('Account Balance Insufficient.');
+        }
+
+        /** @var Transaction $withdrawTransaction */
+        $withdrawTransaction = $this->transactionServices->createWithdrawTransaction(
+            $sourceCardModel,
+            $amountWithFee,
+            TransactionType::CARD_TO_CARD
+        );
+
         try {
             DB::beginTransaction();
 
-            /** @var CardModel $sourceCardModel */
-            $sourceCardModel = CardModel::findWithNumber($sourceCard)->firstOrFail();
-
-            /** @var CardModel $destinationCardModel */
-            $destinationCardModel = CardModel::findWithNumber($destinationCard)->firstOrFail();
-
             $sourceAccount = $this->findAccount($sourceCardModel);
             $destinationAccount = $this->findAccount($destinationCardModel);
-
-            if ($sourceAccount->balance->isLowerThan($amountWithFee)) {
-                throw new AccountBalanceInsufficientException('Account Balance Insufficient.');
-            }
-
-            /** @var Transaction $withdrawTransaction */
-            $withdrawTransaction = $this->transactionServices->createWithdrawTransaction(
-                $sourceCardModel,
-                $amountWithFee,
-                TransactionType::CARD_TO_CARD
-            );
 
             $sourceAccount->update([
                 'balance' => $sourceAccount->balance->decrease($amountWithFee)
@@ -80,14 +86,8 @@ class CardServices
 
             $status = true;
             DB::commit();
-        } catch (AccountBalanceInsufficientException $insufficientException) {
-            DB::rollBack();
-            $error = self::INSUFFICIENT_BALANCE;
         } catch (Exception $exception) {
             DB::rollBack();
-
-            $withdrawIsTransaction = $withdrawTransaction instanceof Transaction;
-            $depositIsTransaction = $depositTransaction instanceof Transaction;
 
             Log::critical('card to card failed', [
                 'exception' => get_class($exception),
@@ -97,15 +97,7 @@ class CardServices
                 'amount' => $amountWithFee->getAmount()
             ]);
 
-            if ($withdrawIsTransaction) {
-                $withdrawTransaction->update(['status' => TransactionStatus::FAILED]);
-            }
-
-            if ($depositIsTransaction) {
-                $depositTransaction->delete();
-                $depositTransaction = null;
-            }
-
+            $withdrawTransaction = $this->transactionServices->setTransactionFailed($withdrawTransaction);
             $error = self::TRANSACTION_FAILED;
         }
 
