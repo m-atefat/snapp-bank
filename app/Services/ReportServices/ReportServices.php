@@ -43,8 +43,6 @@ top_users AS (
         user_id
     FROM
         recent_transactions
-    WHERE
-        RowNum <= 10
     GROUP BY
         user_id
     ORDER BY
