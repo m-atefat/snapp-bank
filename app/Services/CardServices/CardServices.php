@@ -45,7 +45,7 @@ class CardServices
         $amountWithFee = $amount->getAmountObject()->increase($fee);
 
         /** @var CardModel $sourceCardModel */
-        $sourceCardModel = CardModel::findWithNumber($sourceCard)->firstOrFail();
+        $sourceCardModel = CardModel::findWithNumber($sourceCard)->with('account')->firstOrFail();
 
         /** @var CardModel $destinationCardModel */
         $destinationCardModel = CardModel::findWithNumber($destinationCard)->firstOrFail();
@@ -71,7 +71,9 @@ class CardServices
                 'balance' => $sourceAccount->balance->decrease($amountWithFee)
             ]);
 
-            $destinationAccount->update(['balance' => $destinationAccount->balance->increase($amount->getAmountObject())]);
+            $destinationAccount->update([
+                'balance' => $destinationAccount->fresh()->balance->increase($amount->getAmountObject())
+            ]);
             $this->transactionServices->setTransactionDone($withdrawTransaction);
 
             $depositTransaction = $this->transactionServices->createDepositTransaction(
