@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\Channels\SmsChannel;
+use App\Notifications\Contracts\SMSNotificationInterface;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Foundation\Application;
@@ -13,7 +14,7 @@ use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 
-class CardToCardIncreaseBalanceNotification extends Notification implements ShouldQueue
+class CardToCardIncreaseBalanceNotification extends Notification implements ShouldQueue, SMSNotificationInterface
 {
     use Queueable;
 
@@ -41,7 +42,7 @@ class CardToCardIncreaseBalanceNotification extends Notification implements Shou
         return [SmsChannel::class];
     }
 
-    public function toSms(): \Illuminate\Foundation\Application|array|string|Translator|Application|null
+    public function toSms(): string
     {
         return __('notification.card_to_card.increase', [
             'amount' => $this->withdraw->amount->getAmount(),
