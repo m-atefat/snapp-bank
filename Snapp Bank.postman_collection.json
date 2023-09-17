@@ -1,0 +1,70 @@
+{
+	"info": {
+		"_postman_id": "7a99aa37-4584-444a-9129-b509d977058e",
+		"name": "Snapp Bank",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28876553"
+	},
+	"item": [
+		{
+			"name": "Card To Card",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"source_card_number\": \"\",\r\n    \"destination_card_number\": \"\",\r\n    \"amount\": 1000\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://snapp-bank.local/api/v1/cards/card-to-card",
+					"protocol": "http",
+					"host": [
+						"snapp-bank",
+						"local"
+					],
+					"path": [
+						"api",
+						"v1",
+						"cards",
+						"card-to-card"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Top Users In Card To Card",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://snapp-bank.local/api/v1/reports/cards/top-users",
+					"protocol": "http",
+					"host": [
+						"snapp-bank",
+						"local"
+					],
+					"path": [
+						"api",
+						"v1",
+						"reports",
+						"cards",
+						"top-users"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
