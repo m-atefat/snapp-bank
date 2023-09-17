@@ -15,10 +15,10 @@ class TopUserInCardToCardResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->resource->id,
-            'name' => $this->resource->name,
-            'mobile' => $this->resource->mobile,
-            'transactions' => TopUserTransactionResource::collection($this->resource->transactions)
+            'id' => $this->resource->first()?->user_id,
+            'name' => $this->resource->first()?->user_name,
+            'mobile' => $this->resource->first()?->user_mobile,
+            'transactions' => TopUserTransactionResource::collection($this->resource)
         ];
     }
 }
